@@ -2,12 +2,16 @@ package com.java.eventify.service;
 
 import com.java.eventify.dto.CreateVenueRequest;
 import com.java.eventify.exception.DomainValidationException;
+import com.java.eventify.exception.ResourceNotFoundException;
 import com.java.eventify.model.Venue;
 import com.java.eventify.repository.VenueRepository;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class VenueService {
 	private final VenueRepository venueRepository;
 
@@ -16,7 +20,7 @@ public class VenueService {
 	}
 
 	public Venue create(CreateVenueRequest request) {
-		validateCreateRequest(request);
+		validateRequest(request);
 
 		Venue venue = Venue.builder()
 				.name(request.getName().trim())
@@ -27,11 +31,37 @@ public class VenueService {
 		return venueRepository.save(venue);
 	}
 
-	public List<Venue> getAll() {
-		return venueRepository.findAll();
+	@Transactional(readOnly = true)
+	public Page<Venue> getAll(String name, Pageable pageable) {
+		if (name == null || name.trim().isEmpty()) {
+			return venueRepository.findAll(pageable);
+		}
+		return venueRepository.findByNameContaining(name.trim(), pageable);
 	}
 
-	private void validateCreateRequest(CreateVenueRequest request) {
+	@Transactional(readOnly = true)
+	public Venue getById(Long id) {
+		return venueRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Venue with id " + id + " was not found"));
+	}
+
+	public Venue update(Long id, CreateVenueRequest request) {
+		validateRequest(request);
+
+		Venue existingVenue = getById(id);
+		existingVenue.setName(request.getName().trim());
+		existingVenue.setAddress(request.getAddress().trim());
+		existingVenue.setCapacity(request.getCapacity());
+
+		return venueRepository.save(existingVenue);
+	}
+
+	public void delete(Long id) {
+		Venue existingVenue = getById(id);
+		venueRepository.delete(existingVenue);
+	}
+
+	private void validateRequest(CreateVenueRequest request) {
 		if (request == null) {
 			throw new DomainValidationException("Venue payload is required");
 		}

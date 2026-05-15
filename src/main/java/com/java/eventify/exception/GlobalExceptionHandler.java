@@ -15,14 +15,32 @@ public class GlobalExceptionHandler {
 			DomainValidationException ex,
 			HttpServletRequest request
 	) {
-		ApiErrorResponse body = ApiErrorResponse.builder()
-				.timestamp(Instant.now())
-				.status(HttpStatus.BAD_REQUEST.value())
-				.error(HttpStatus.BAD_REQUEST.getReasonPhrase())
-				.message(ex.getMessage())
-				.path(request.getRequestURI())
-				.build();
+		return ResponseEntity.badRequest().body(buildErrorResponse(
+				HttpStatus.BAD_REQUEST,
+				ex.getMessage(),
+				request.getRequestURI()
+		));
+	}
 
-		return ResponseEntity.badRequest().body(body);
+	@ExceptionHandler(ResourceNotFoundException.class)
+	public ResponseEntity<ApiErrorResponse> handleResourceNotFound(
+			ResourceNotFoundException ex,
+			HttpServletRequest request
+	) {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(buildErrorResponse(
+				HttpStatus.NOT_FOUND,
+				ex.getMessage(),
+				request.getRequestURI()
+		));
+	}
+
+	private ApiErrorResponse buildErrorResponse(HttpStatus status, String message, String path) {
+		return ApiErrorResponse.builder()
+				.timestamp(Instant.now())
+				.status(status.value())
+				.error(status.getReasonPhrase())
+				.message(message)
+				.path(path)
+				.build();
 	}
 }
