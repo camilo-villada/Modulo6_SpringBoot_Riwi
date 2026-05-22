@@ -5,8 +5,10 @@ import com.java.eventify.exception.DomainValidationException;
 import com.java.eventify.exception.ResourceNotFoundException;
 import com.java.eventify.model.Venue;
 import com.java.eventify.repository.VenueRepository;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,11 @@ public class VenueService {
 	public Venue getById(Long id) {
 		return venueRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Venue with id " + id + " was not found"));
+	}
+
+	@Transactional(readOnly = true)
+	public List<Venue> getAllForAdmin() {
+		return venueRepository.findAll(Sort.by(Sort.Order.asc("name"), Sort.Order.asc("address")));
 	}
 
 	public Venue update(Long id, CreateVenueRequest request) {

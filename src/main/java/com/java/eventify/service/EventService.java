@@ -4,9 +4,11 @@ import com.java.eventify.dto.CreateEventRequest;
 import com.java.eventify.exception.DomainValidationException;
 import com.java.eventify.exception.ResourceNotFoundException;
 import com.java.eventify.model.Event;
+import java.util.List;
 import com.java.eventify.repository.EventRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,11 @@ public class EventService {
 	public Event getById(Long id) {
 		return eventRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Event with id " + id + " was not found"));
+	}
+
+	@Transactional(readOnly = true)
+	public List<Event> getAllForAdmin() {
+		return eventRepository.findAll(Sort.by(Sort.Order.asc("date"), Sort.Order.asc("name")));
 	}
 
 	public Event update(Long id, CreateEventRequest request) {
