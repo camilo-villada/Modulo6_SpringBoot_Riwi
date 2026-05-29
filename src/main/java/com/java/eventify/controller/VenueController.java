@@ -111,6 +111,6 @@ public class VenueController {
 	}
 
 	private VenueResponse toResponse(Venue venue) {
-		return new VenueResponse(venue.getId(), venue.getName(), venue.getAddress(), venue.getCapacity());
+		return new VenueResponse(venue.getId(), venue.getName(), venue.getAddress(), venue.getCapacity(), venue.getCity());
 	}
 }

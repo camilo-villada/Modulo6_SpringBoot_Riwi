@@ -3,6 +3,8 @@ package com.java.eventify.controller;
 import com.java.eventify.dto.CreateEventRequest;
 import com.java.eventify.dto.ApiErrorResponse;
 import com.java.eventify.dto.EventResponse;
+import com.java.eventify.dto.EventSummaryDTO;
+import com.java.eventify.model.Category;
 import com.java.eventify.model.Event;
 import com.java.eventify.service.EventService;
 import io.swagger.v3.oas.annotations.*;
@@ -12,8 +14,12 @@ import io.swagger.v3.oas.annotations.responses.*;
 import io.swagger.v3.oas.annotations.tags.*;
 import org.springdoc.core.annotations.ParameterObject;
 import java.net.URI;
+import java.time.LocalDate;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -50,15 +56,24 @@ public class EventController {
 		return ResponseEntity.created(location).body(toResponse(created));
 	}
 
-	@Operation(summary = "List events", description = "Returns paginated events with optional filtering by name")
+	@Operation(
+			summary = "Search active events",
+			description = "Returns active events only. Soft-deleted events are hidden automatically by the global SQL restriction."
+	)
 	@ApiResponse(responseCode = "200", description = "Events page returned")
 	@GetMapping
-	public ResponseEntity<Page<EventResponse>> getAll(
-			@Parameter(description = "Optional partial name filter") @RequestParam(required = false) String name,
-			@ParameterObject Pageable pageable
-	) {
-		Page<EventResponse> response = eventService.getAll(name, pageable).map(this::toResponse);
-		return ResponseEntity.ok(response);
+	public ResponseEntity<Slice<EventSummaryDTO>> getAll(
+				@Parameter(description = "Partial city filter, case-insensitive") @RequestParam(required = false) String city,
+				@Parameter(description = "Partial category name filter, case-insensitive") @RequestParam(required = false) String category,
+				@Parameter(description = "Start date filter, ISO format yyyy-MM-dd")
+				@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+				@Parameter(description = "End date filter, ISO format yyyy-MM-dd")
+				@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+				@Parameter(description = "Minimum venue capacity") @RequestParam(required = false) Integer minCapacity,
+				@ParameterObject Pageable pageable
+		) {
+			Slice<EventSummaryDTO> response = eventService.searchSummaries(city, category, fromDate, toDate, minCapacity, pageable);
+			return ResponseEntity.ok(response);
 	}
 
 	@Operation(summary = "Get event by id")
@@ -94,7 +109,7 @@ public class EventController {
 		return ResponseEntity.ok(toResponse(eventService.update(id, request)));
 	}
 
-	@Operation(summary = "Delete event by id")
+	@Operation(summary = "Soft delete event by id", description = "Deactivates the event instead of physically deleting it.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "204", description = "Event deleted"),
 			@ApiResponse(
@@ -111,6 +126,18 @@ public class EventController {
 	}
 
 	private EventResponse toResponse(Event event) {
-		return new EventResponse(event.getId(), event.getName(), event.getDate(), event.getDescription());
+		return new EventResponse(
+				event.getId(),
+				event.getName(),
+				event.getDate(),
+				event.getDescription(),
+				event.getActive(),
+				event.getVenue().getId(),
+				event.getVenue().getName(),
+				event.getVenue().getCity(),
+				event.getCategories().stream()
+						.map(Category::getName)
+						.collect(Collectors.toSet())
+		);
 	}
 }

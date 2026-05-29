@@ -11,4 +11,5 @@ public class CreateVenueRequest {
 	private String name;
 	private String address;
 	private Integer capacity;
+	private String city;
 }
