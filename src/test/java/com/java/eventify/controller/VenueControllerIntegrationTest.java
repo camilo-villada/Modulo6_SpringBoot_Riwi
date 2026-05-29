@@ -43,7 +43,8 @@ class VenueControllerIntegrationTest {
 				{
 				  "name": "Grand Hall",
 				  "address": "123 Central Avenue",
-				  "capacity": 500
+				  "capacity": 500,
+				  "city": "Bogotá"
 				}
 				""";
 
@@ -53,30 +54,33 @@ class VenueControllerIntegrationTest {
 				.andExpect(status().isCreated())
 				.andExpect(header().string("Location", containsString("/api/venues/")))
 				.andExpect(jsonPath("$.id").isNumber())
-				.andExpect(jsonPath("$.name").value("Grand Hall"))
-				.andExpect(jsonPath("$.address").value("123 Central Avenue"))
-				.andExpect(jsonPath("$.capacity").value(500));
+					.andExpect(jsonPath("$.name").value("Grand Hall"))
+					.andExpect(jsonPath("$.address").value("123 Central Avenue"))
+					.andExpect(jsonPath("$.capacity").value(500))
+					.andExpect(jsonPath("$.city").value("Bogotá"));
 
 		Venue savedVenue = venueRepository.findAll().getFirst();
 
 		mockMvc.perform(get("/api/venues/{id}", savedVenue.getId()))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.id").value(savedVenue.getId()))
-				.andExpect(jsonPath("$.name").value("Grand Hall"));
+					.andExpect(jsonPath("$.id").value(savedVenue.getId()))
+					.andExpect(jsonPath("$.name").value("Grand Hall"));
 	}
 
 	@Test
 	void list_returnsPaginatedAndSortedVenues() throws Exception {
 		venueRepository.save(Venue.builder()
-				.name("Zen Garden")
-				.address("99 South Street")
-				.capacity(80)
-				.build());
-		venueRepository.save(Venue.builder()
-				.name("Alpha Center")
-				.address("11 North Street")
-				.capacity(250)
-				.build());
+					.name("Zen Garden")
+					.address("99 South Street")
+					.capacity(80)
+					.city("Pereira")
+					.build());
+			venueRepository.save(Venue.builder()
+					.name("Alpha Center")
+					.address("11 North Street")
+					.capacity(250)
+					.city("Bogotá")
+					.build());
 
 		mockMvc.perform(get("/api/venues")
 						.param("page", "0")
@@ -101,16 +105,18 @@ class VenueControllerIntegrationTest {
 	@Test
 	void updateExistingVenue_returnsUpdatedPayload() throws Exception {
 		Venue savedVenue = venueRepository.save(Venue.builder()
-				.name("Old Venue")
-				.address("Old Address")
-				.capacity(100)
-				.build());
+					.name("Old Venue")
+					.address("Old Address")
+					.capacity(100)
+					.city("Cali")
+					.build());
 
 		String requestBody = """
 				{
 				  "name": "Updated Venue",
 				  "address": "500 New Avenue",
-				  "capacity": 350
+				  "capacity": 350,
+				  "city": "Medellín"
 				}
 				""";
 
@@ -119,8 +125,9 @@ class VenueControllerIntegrationTest {
 						.content(requestBody))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(savedVenue.getId()))
-				.andExpect(jsonPath("$.name").value("Updated Venue"))
-				.andExpect(jsonPath("$.address").value("500 New Avenue"))
-				.andExpect(jsonPath("$.capacity").value(350));
+					.andExpect(jsonPath("$.name").value("Updated Venue"))
+					.andExpect(jsonPath("$.address").value("500 New Avenue"))
+					.andExpect(jsonPath("$.capacity").value(350))
+					.andExpect(jsonPath("$.city").value("Medellín"));
 	}
 }
