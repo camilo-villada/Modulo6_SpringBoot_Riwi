@@ -12,25 +12,19 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "venues")
+@Table(name = "categories")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Venue {
+public class Category {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(nullable = false)
+	@Column(nullable = false, unique = true)
 	private String name;
 
 	@Column(nullable = false)
-	private String address;
-
-	@Column(nullable = false)
-	private Integer capacity;
-
-	@Column(nullable = false)
-	private String city;
+	private String description;
 }

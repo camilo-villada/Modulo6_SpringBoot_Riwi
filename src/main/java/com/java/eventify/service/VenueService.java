@@ -24,11 +24,12 @@ public class VenueService {
 	public Venue create(CreateVenueRequest request) {
 		validateRequest(request);
 
-		Venue venue = Venue.builder()
-				.name(request.getName().trim())
-				.address(request.getAddress().trim())
-				.capacity(request.getCapacity())
-				.build();
+			Venue venue = Venue.builder()
+					.name(request.getName().trim())
+					.address(request.getAddress().trim())
+					.capacity(request.getCapacity())
+					.city(request.getCity().trim())
+					.build();
 
 		return venueRepository.save(venue);
 	}
@@ -59,6 +60,7 @@ public class VenueService {
 		existingVenue.setName(request.getName().trim());
 		existingVenue.setAddress(request.getAddress().trim());
 		existingVenue.setCapacity(request.getCapacity());
+		existingVenue.setCity(request.getCity().trim());
 
 		return venueRepository.save(existingVenue);
 	}
@@ -80,6 +82,9 @@ public class VenueService {
 		}
 		if (request.getCapacity() == null || request.getCapacity() <= 0) {
 			throw new DomainValidationException("Venue capacity must be greater than 0");
+		}
+		if (request.getCity() == null || request.getCity().trim().isEmpty()) {
+			throw new DomainValidationException("Venue city must not be blank");
 		}
 	}
 }
