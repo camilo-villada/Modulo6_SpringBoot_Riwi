@@ -1,0 +1,5 @@
+# Map incorrect commit identities to the canonical contributor identity.
+# Format:
+#   Correct Name <correct@email>  Wrong Name <wrong@email>
+
+camilo-villada <villajuan163@gmail.com> alexis-pr <yonathan.yp20@gmail.com>
