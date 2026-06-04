@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.java.eventify.model.Event;
 import com.java.eventify.model.Category;
 import com.java.eventify.model.Venue;
-import com.java.eventify.repository.CategoryRepository;
 import java.time.LocalDate;
 import java.util.Set;
 import org.junit.jupiter.api.Test;

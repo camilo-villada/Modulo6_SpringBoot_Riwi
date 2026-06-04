@@ -1,9 +1,11 @@
 package com.java.eventify.service;
 
-import com.java.eventify.dto.CreateEventRequest;
+import com.java.eventify.dto.EventCreateDTO;
+import com.java.eventify.dto.EventResponseDTO;
 import com.java.eventify.dto.EventSummaryDTO;
 import com.java.eventify.exception.DomainValidationException;
 import com.java.eventify.exception.ResourceNotFoundException;
+import com.java.eventify.mapper.EventMapper;
 import com.java.eventify.model.Category;
 import com.java.eventify.model.Event;
 import com.java.eventify.model.Venue;
@@ -24,18 +26,21 @@ public class EventService {
 	private final EventRepository eventRepository;
 	private final VenueRepository venueRepository;
 	private final CategoryRepository categoryRepository;
+	private final EventMapper eventMapper;
 
 	public EventService(
 			EventRepository eventRepository,
 			VenueRepository venueRepository,
-			CategoryRepository categoryRepository
+			CategoryRepository categoryRepository,
+			EventMapper eventMapper
 	) {
 		this.eventRepository = eventRepository;
 		this.venueRepository = venueRepository;
 		this.categoryRepository = categoryRepository;
+		this.eventMapper = eventMapper;
 	}
 
-	public Event create(CreateEventRequest request) {
+	public EventResponseDTO create(EventCreateDTO request) {
 		validateRequest(request);
 		Venue venue = venueRepository.findById(request.getVenueId())
 				.orElseThrow(() -> new ResourceNotFoundException("Venue with id " + request.getVenueId() + " was not found"));
@@ -44,35 +49,36 @@ public class EventService {
 			throw new DomainValidationException("Every selected category must exist");
 		}
 
-		Event event = Event.builder()
-				.name(request.getName().trim())
-				.date(request.getDate())
-				.description(request.getDescription().trim())
-				.active(true)
-				.venue(venue)
-				.categories(Set.copyOf(categories))
-				.build();
+		Event event = eventMapper.toEntity(request);
+		event.setName(request.getName().trim());
+		event.setDescription(request.getDescription().trim());
+		event.setVenue(venue);
+		event.setCategories(Set.copyOf(categories));
 
-		return eventRepository.save(event);
+		Event saved = eventRepository.save(event);
+		return eventMapper.toResponseDTO(saved);
 	}
 
 	@Transactional(readOnly = true)
-	public Page<Event> getAll(String name, Pageable pageable) {
+	public Page<EventResponseDTO> getAll(String name, Pageable pageable) {
 		if (name == null || name.trim().isEmpty()) {
-			return eventRepository.findAll(pageable);
+			return eventRepository.findAll(pageable).map(eventMapper::toResponseDTO);
 		}
-		return eventRepository.findByNameContaining(name.trim(), pageable);
+		return eventRepository.findByNameContaining(name.trim(), pageable).map(eventMapper::toResponseDTO);
 	}
 
 	@Transactional(readOnly = true)
-	public Event getById(Long id) {
-		return eventRepository.findDetailedById(id)
+	public EventResponseDTO getById(Long id) {
+		Event event = eventRepository.findDetailedById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Event with id " + id + " was not found"));
+		return eventMapper.toResponseDTO(event);
 	}
 
 	@Transactional(readOnly = true)
-	public List<Event> getAllForAdmin() {
-		return eventRepository.findAllByOrderByDateDesc();
+	public List<EventResponseDTO> getAllForAdmin() {
+		return eventRepository.findAllByOrderByDateDesc().stream()
+				.map(eventMapper::toResponseDTO)
+				.toList();
 	}
 
 	@Transactional(readOnly = true)
@@ -94,7 +100,7 @@ public class EventService {
 		);
 	}
 
-	public Event update(Long id, CreateEventRequest request) {
+	public EventResponseDTO update(Long id, EventCreateDTO request) {
 		validateRequest(request);
 		Venue venue = venueRepository.findById(request.getVenueId())
 				.orElseThrow(() -> new ResourceNotFoundException("Venue with id " + request.getVenueId() + " was not found"));
@@ -103,23 +109,26 @@ public class EventService {
 			throw new DomainValidationException("Every selected category must exist");
 		}
 
-		Event existingEvent = getById(id);
+		Event existingEvent = eventRepository.findDetailedById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Event with id " + id + " was not found"));
 		existingEvent.setName(request.getName().trim());
 		existingEvent.setDate(request.getDate());
 		existingEvent.setDescription(request.getDescription().trim());
 		existingEvent.setVenue(venue);
 		existingEvent.setCategories(Set.copyOf(categories));
 
-		return eventRepository.save(existingEvent);
+		Event updated = eventRepository.save(existingEvent);
+		return eventMapper.toResponseDTO(updated);
 	}
 
 	public void delete(Long id) {
-		Event existingEvent = getById(id);
+		Event existingEvent = eventRepository.findDetailedById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Event with id " + id + " was not found"));
 		existingEvent.deactivate();
 		eventRepository.save(existingEvent);
 	}
 
-	private void validateRequest(CreateEventRequest request) {
+	private void validateRequest(EventCreateDTO request) {
 		if (request == null) {
 			throw new DomainValidationException("Event payload is required");
 		}

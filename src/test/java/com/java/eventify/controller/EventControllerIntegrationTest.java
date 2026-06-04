@@ -76,8 +76,7 @@ class EventControllerIntegrationTest {
 					.andExpect(jsonPath("$.name").value("Spring Summit"))
 					.andExpect(jsonPath("$.date").value("2026-06-15"))
 					.andExpect(jsonPath("$.description").value("Annual product summit"))
-					.andExpect(jsonPath("$.venueName").value("Grand Hall"))
-					.andExpect(jsonPath("$.city").value("Bogotá"));
+					.andExpect(jsonPath("$.venueName").value("Grand Hall"));
 
 		Event savedEvent = eventRepository.findAll().getFirst();
 

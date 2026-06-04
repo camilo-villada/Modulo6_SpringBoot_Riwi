@@ -257,6 +257,21 @@
 			color: rgba(21, 33, 45, 0.7);
 		}
 
+		.field-error {
+			display: block;
+			margin-top: 4px;
+			font-size: 0.82rem;
+			font-weight: 600;
+			color: var(--coral);
+		}
+
+		input.input-invalid,
+		select.input-invalid,
+		textarea.input-invalid {
+			border-color: var(--coral);
+			background: rgba(194, 65, 12, 0.04);
+		}
+
 		@media (max-width: 900px) {
 			.layout {
 				grid-template-columns: 1fr;
@@ -393,22 +408,25 @@
 						<h3>Create Event</h3>
 						<label>
 							Name
-							<input type="text" th:field="*{name}" placeholder="Spring Summit">
+							<input type="text" th:field="*{name}" th:errorclass="input-invalid" placeholder="Spring Summit">
+							<span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
 						</label>
 
 						<label>
 							Date
-							<input type="date" th:field="*{date}">
+							<input type="date" th:field="*{date}" th:errorclass="input-invalid">
+							<span class="field-error" th:if="${#fields.hasErrors('date')}" th:errors="*{date}"></span>
 						</label>
 
 							<label>
 								Description
-								<textarea th:field="*{description}" placeholder="Annual product summit"></textarea>
+								<textarea th:field="*{description}" th:errorclass="input-invalid" placeholder="Annual product summit"></textarea>
+								<span class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
 							</label>
 
 							<label>
 								Venue
-								<select th:field="*{venueId}">
+								<select th:field="*{venueId}" th:errorclass="input-invalid">
 									<option value="">Select venue</option>
 									<option th:each="venue : ${venues}"
 											th:value="${venue.id}"
@@ -416,6 +434,7 @@
 										Grand Hall - Bogotá
 									</option>
 								</select>
+								<span class="field-error" th:if="${#fields.hasErrors('venueId')}" th:errors="*{venueId}"></span>
 							</label>
 
 							<div>
@@ -426,6 +445,7 @@
 										<span th:text="${category.name}">Concerts</span>
 									</label>
 								</div>
+								<span class="field-error" th:if="${#fields.hasErrors('categoryIds')}" th:errors="*{categoryIds}"></span>
 							</div>
 
 							<button type="submit">Save Event</button>
@@ -435,22 +455,26 @@
 						<h3>Create Venue</h3>
 						<label>
 							Name
-							<input type="text" th:field="*{name}" placeholder="Grand Hall">
+							<input type="text" th:field="*{name}" th:errorclass="input-invalid" placeholder="Grand Hall">
+							<span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
 						</label>
 
 						<label>
 							Address
-							<input type="text" th:field="*{address}" placeholder="123 Central Avenue">
+							<input type="text" th:field="*{address}" th:errorclass="input-invalid" placeholder="123 Central Avenue">
+							<span class="field-error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></span>
 						</label>
 
 							<label>
 								Capacity
-								<input type="number" min="1" th:field="*{capacity}" placeholder="500">
+								<input type="number" min="1" th:field="*{capacity}" th:errorclass="input-invalid" placeholder="500">
+								<span class="field-error" th:if="${#fields.hasErrors('capacity')}" th:errors="*{capacity}"></span>
 							</label>
 
 							<label>
 								City
-								<input type="text" th:field="*{city}" placeholder="Bogotá">
+								<input type="text" th:field="*{city}" th:errorclass="input-invalid" placeholder="Bogotá">
+								<span class="field-error" th:if="${#fields.hasErrors('city')}" th:errors="*{city}"></span>
 							</label>
 
 							<button type="submit">Save Venue</button>
