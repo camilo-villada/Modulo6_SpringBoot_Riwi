@@ -1,8 +1,10 @@
 package com.java.eventify.service;
 
-import com.java.eventify.dto.CreateVenueRequest;
+import com.java.eventify.dto.VenueCreateDTO;
+import com.java.eventify.dto.VenueResponseDTO;
 import com.java.eventify.exception.DomainValidationException;
 import com.java.eventify.exception.ResourceNotFoundException;
+import com.java.eventify.mapper.VennueMapper;
 import com.java.eventify.model.Venue;
 import com.java.eventify.repository.VenueRepository;
 import java.util.List;
@@ -16,61 +18,81 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class VenueService {
 	private final VenueRepository venueRepository;
+	private final VennueMapper vennueMapper;
 
-	public VenueService(VenueRepository venueRepository) {
+	public VenueService(VenueRepository venueRepository, VennueMapper vennueMapper) {
 		this.venueRepository = venueRepository;
+		this.vennueMapper = vennueMapper;
 	}
 
-	public Venue create(CreateVenueRequest request) {
+	//create
+	public VenueResponseDTO create(VenueCreateDTO request) {
 		validateRequest(request);
 
-			Venue venue = Venue.builder()
-					.name(request.getName().trim())
-					.address(request.getAddress().trim())
-					.capacity(request.getCapacity())
-					.city(request.getCity().trim())
-					.build();
+		Venue venue = vennueMapper.toEntity(request);
 
-		return venueRepository.save(venue);
+		venue.setName(venue.getName().trim());
+		venue.setAddress(venue.getAddress().trim());
+		venue.setCity(venue.getCity().trim());
+
+		Venue savedVenue = venueRepository.save(venue);
+
+		return vennueMapper.toResponseDTO((savedVenue));
 	}
 
+	//getAll
 	@Transactional(readOnly = true)
-	public Page<Venue> getAll(String name, Pageable pageable) {
+	public Page<VenueResponseDTO> getAll(String name, Pageable pageable) {
 		if (name == null || name.trim().isEmpty()) {
-			return venueRepository.findAll(pageable);
+			return venueRepository.findAll(pageable).map(vennueMapper::toResponseDTO);
 		}
-		return venueRepository.findByNameContaining(name.trim(), pageable);
+		return venueRepository.findByNameContaining(name.trim(), pageable).map(vennueMapper::toResponseDTO);
+	}
+
+	//getById
+	@Transactional(readOnly = true)
+	public VenueResponseDTO getById(Long id) {
+		
+		Venue venue = venueRepository.findById(id).orElseThrow(() -> new
+		ResourceNotFoundException("Venue with id " + id + "was not found"));
+
+		return vennueMapper.toResponseDTO(venue);
 	}
 
 	@Transactional(readOnly = true)
-	public Venue getById(Long id) {
-		return venueRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Venue with id " + id + " was not found"));
+	public List<VenueResponseDTO> getAllForAdmin() {
+		return venueRepository.findAll(Sort.by(Sort.Order.asc("name"), Sort.Order.asc("address")))
+		.stream()
+		.map(vennueMapper::toResponseDTO)
+		.toList();
 	}
 
-	@Transactional(readOnly = true)
-	public List<Venue> getAllForAdmin() {
-		return venueRepository.findAll(Sort.by(Sort.Order.asc("name"), Sort.Order.asc("address")));
-	}
-
-	public Venue update(Long id, CreateVenueRequest request) {
+	//update
+	public VenueResponseDTO
+	update(Long id, VenueCreateDTO request) {
 		validateRequest(request);
 
-		Venue existingVenue = getById(id);
+		Venue existingVenue = venueRepository.findById(id).orElseThrow(() -> new 
+		ResourceNotFoundException("Venue with id " + id + "was not found"));
+		
 		existingVenue.setName(request.getName().trim());
 		existingVenue.setAddress(request.getAddress().trim());
 		existingVenue.setCapacity(request.getCapacity());
 		existingVenue.setCity(request.getCity().trim());
 
-		return venueRepository.save(existingVenue);
+		Venue updatVenue = venueRepository.save(existingVenue);
+
+		return vennueMapper.toResponseDTO(updatVenue);
 	}
 
 	public void delete(Long id) {
-		Venue existingVenue = getById(id);
+		Venue existingVenue = venueRepository.findById(id)
+				.orElseThrow(() -> new 
+				ResourceNotFoundException("Venue with id " + id + " was not found"));
 		venueRepository.delete(existingVenue);
 	}
 
-	private void validateRequest(CreateVenueRequest request) {
+	private void validateRequest(VenueCreateDTO request) {
 		if (request == null) {
 			throw new DomainValidationException("Venue payload is required");
 		}

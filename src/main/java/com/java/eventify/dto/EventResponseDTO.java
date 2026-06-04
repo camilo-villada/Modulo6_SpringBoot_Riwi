@@ -5,14 +5,11 @@ import java.util.Set;
 import lombok.Value;
 
 @Value
-public class EventResponse {
+public class EventResponseDTO {
 	Long id;
 	String name;
 	LocalDate date;
 	String description;
-	Boolean active;
-	Long venueId;
 	String venueName;
-	String city;
-	Set<String> categories;
+	Set<String> categoryNames;
 }
