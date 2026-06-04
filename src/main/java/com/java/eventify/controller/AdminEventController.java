@@ -1,11 +1,11 @@
 package com.java.eventify.controller;
 
-import com.java.eventify.dto.CreateEventRequest;
-import com.java.eventify.dto.CreateVenueRequest;
+import com.java.eventify.dto.EventCreateDTO;
+import com.java.eventify.dto.VenueCreateDTO;
 import com.java.eventify.dto.EventSummaryDTO;
+import com.java.eventify.dto.EventResponseDTO;
+import com.java.eventify.dto.VenueResponseDTO;
 import com.java.eventify.exception.DomainValidationException;
-import com.java.eventify.model.Event;
-import com.java.eventify.model.Venue;
 import com.java.eventify.service.CategoryService;
 import com.java.eventify.service.EventService;
 import com.java.eventify.service.VenueService;
@@ -69,7 +69,7 @@ public class AdminEventController {
 
 	@PostMapping("/events")
 	public String createEvent(
-			@ModelAttribute("eventForm") CreateEventRequest eventForm,
+			@ModelAttribute("eventForm") EventCreateDTO eventForm,
 			BindingResult bindingResult,
 			Model model,
 			RedirectAttributes redirectAttributes
@@ -81,7 +81,7 @@ public class AdminEventController {
 			}
 
 		try {
-			Event createdEvent = eventService.create(eventForm);
+			EventResponseDTO createdEvent = eventService.create(eventForm);
 			redirectAttributes.addFlashAttribute(
 					"successMessage",
 					"Event \"" + createdEvent.getName() + "\" was created successfully."
@@ -96,7 +96,7 @@ public class AdminEventController {
 
 	@PostMapping("/venues")
 	public String createVenue(
-			@ModelAttribute("venueForm") CreateVenueRequest venueForm,
+			@ModelAttribute("venueForm") VenueCreateDTO venueForm,
 			BindingResult bindingResult,
 			Model model,
 			RedirectAttributes redirectAttributes
@@ -108,7 +108,7 @@ public class AdminEventController {
 			}
 
 		try {
-			Venue createdVenue = venueService.create(venueForm);
+			VenueResponseDTO createdVenue = venueService.create(venueForm);
 			redirectAttributes.addFlashAttribute(
 					"successMessage",
 					"Venue \"" + createdVenue.getName() + "\" was created successfully."
@@ -131,10 +131,10 @@ public class AdminEventController {
 			int page
 	) {
 		if (!model.containsAttribute("eventForm")) {
-			model.addAttribute("eventForm", new CreateEventRequest());
+			model.addAttribute("eventForm", new EventCreateDTO());
 		}
 		if (!model.containsAttribute("venueForm")) {
-			model.addAttribute("venueForm", new CreateVenueRequest());
+			model.addAttribute("venueForm", new VenueCreateDTO());
 		}
 
 		Pageable pageable = PageRequest.of(Math.max(page, 0), 20);

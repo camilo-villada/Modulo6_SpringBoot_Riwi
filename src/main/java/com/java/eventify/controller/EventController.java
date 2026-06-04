@@ -1,22 +1,19 @@
 package com.java.eventify.controller;
 
-import com.java.eventify.dto.CreateEventRequest;
-import com.java.eventify.dto.ApiErrorResponse;
-import com.java.eventify.dto.EventResponse;
+import com.java.eventify.dto.EventCreateDTO;
+import com.java.eventify.dto.EventResponseDTO;
 import com.java.eventify.dto.EventSummaryDTO;
-import com.java.eventify.model.Category;
-import com.java.eventify.model.Event;
 import com.java.eventify.service.EventService;
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.*;
 import io.swagger.v3.oas.annotations.tags.*;
+import jakarta.validation.Valid;
+
 import org.springdoc.core.annotations.ParameterObject;
 import java.net.URI;
 import java.time.LocalDate;
-import java.util.stream.Collectors;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -40,12 +37,14 @@ public class EventController {
 			@ApiResponse(
 					responseCode = "400",
 					description = "Invalid request",
-					content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+					content = @Content(schema = @Schema(implementation = ProblemDetail.class))
 			)
 	})
+
+	
 	@PostMapping
-	public ResponseEntity<EventResponse> create(@RequestBody CreateEventRequest request) {
-		Event created = eventService.create(request);
+	public ResponseEntity<EventResponseDTO> create( @Valid @RequestBody EventCreateDTO request) {
+		EventResponseDTO created = eventService.create(request);
 
 		URI location = ServletUriComponentsBuilder
 				.fromCurrentRequest()
@@ -53,7 +52,7 @@ public class EventController {
 				.buildAndExpand(created.getId())
 				.toUri();
 
-		return ResponseEntity.created(location).body(toResponse(created));
+		return ResponseEntity.created(location).body(created);
 	}
 
 	@Operation(
@@ -80,14 +79,15 @@ public class EventController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Event found"),
 			@ApiResponse(
+					// Add proper response details using ProblemDetail
 					responseCode = "404",
 					description = "Event not found",
-					content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+					content = @Content(schema = @Schema(implementation = ProblemDetail.class))
 			)
 	})
 	@GetMapping("/{id}")
-	public ResponseEntity<EventResponse> getById(@PathVariable Long id) {
-		return ResponseEntity.ok(toResponse(eventService.getById(id)));
+	public ResponseEntity<EventResponseDTO> getById(@PathVariable Long id) {
+		return ResponseEntity.ok(eventService.getById(id));
 	}
 
 	@Operation(summary = "Update event by id")
@@ -96,17 +96,18 @@ public class EventController {
 			@ApiResponse(
 					responseCode = "400",
 					description = "Invalid request",
-					content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+					content = @Content(schema = @Schema(implementation = ProblemDetail.class))
 			),
 			@ApiResponse(
 					responseCode = "404",
 					description = "Event not found",
-					content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+					content = @Content(schema = @Schema(implementation = ProblemDetail.class))
 			)
 	})
+
 	@PutMapping("/{id}")
-	public ResponseEntity<EventResponse> update(@PathVariable Long id, @RequestBody CreateEventRequest request) {
-		return ResponseEntity.ok(toResponse(eventService.update(id, request)));
+	public ResponseEntity<EventResponseDTO> update(@PathVariable Long id, @Valid @RequestBody EventCreateDTO request) {
+		return ResponseEntity.ok(eventService.update(id, request));
 	}
 
 	@Operation(summary = "Soft delete event by id", description = "Deactivates the event instead of physically deleting it.")
@@ -115,7 +116,7 @@ public class EventController {
 			@ApiResponse(
 					responseCode = "404",
 					description = "Event not found",
-					content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+					content = @Content(schema = @Schema(implementation = ProblemDetail.class))
 			)
 	})
 	@DeleteMapping("/{id}")
@@ -123,21 +124,5 @@ public class EventController {
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
 		eventService.delete(id);
 		return ResponseEntity.noContent().build();
-	}
-
-	private EventResponse toResponse(Event event) {
-		return new EventResponse(
-				event.getId(),
-				event.getName(),
-				event.getDate(),
-				event.getDescription(),
-				event.getActive(),
-				event.getVenue().getId(),
-				event.getVenue().getName(),
-				event.getVenue().getCity(),
-				event.getCategories().stream()
-						.map(Category::getName)
-						.collect(Collectors.toSet())
-		);
 	}
 }
